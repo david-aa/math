@@ -1,0 +1,127 @@
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<canvas id="canvas"></canvas>
+<form>
+<p>Increment: <input name="increment" value="0.01"></p>
+<p>Iterations: <input name="iterations" value="100"></p>
+<p>Function: <select name="function">
+                <option value="1">z^2+c</option>
+                <option value="2">(z+c)(z-c)</option>
+                <option value="3">z^3+c</option>
+                <option value="4">z^4+c</option>
+
+             </select>
+
+<p><input type="button" value="Run!" id="run"></p>
+<p id="message"></p>
+</form>
+
+<script>
+var width = 600;
+var height = 600;
+var c = document.getElementById("canvas");
+c.setAttribute('width', width);
+c.setAttribute('height', height);
+var ctx = c.getContext("2d");
+
+var mandelbrot_limit = 2.0;
+var mandelbrot_max_module = 4;
+
+
+
+function adjust_scale(i, j) {
+    return [(width/(2*mandelbrot_limit))*i + (width/2), (height/(2*mandelbrot_limit))*j + (height/2)];
+}
+
+function get_color(nIter) {
+    var factor = 50 + nIter;
+    factor = parseInt(factor);
+    if (factor > 255) factor = 255;
+    return "rgb("+factor+",0,0)";
+}
+
+function mandelbrot1(z, c) {
+    // (z^2 + c)
+    var x = z[0]; 
+    var y = z[1];
+    var real = x*x - y*y + c[0];
+    var imag = 2*x*y + c[1];
+    return [real, imag];
+}
+
+function mandelbrot2(z, c) {
+    // (z + c)(z - c)
+    var real = z[0]*z[0] - c[0]*c[0] - z[1]*z[1] + c[1]*c[1];
+    var imag = 2*z[0]*z[1] + 2*c[0]*c[1];
+    return [real, imag];
+}
+
+function mandelbrot3(z, c) {
+    // (z^3 + c)
+    var real = z[0]*z[0]*z[0] - 3*z[0]*z[1]*z[1] + c[0];
+    var imag = 3*z[0]*z[0]*z[1] - z[1]*z[1]*z[1] + c[1];
+    return [real, imag];
+}
+
+function mandelbrot4(z, c) {
+    // (z^4 + c)
+    var real = z[0]*z[0]*z[0]*z[0] - 6*z[0]*z[0]*z[1]*z[1] + z[1]*z[1]*z[1]*z[1] + c[0];
+    var imag = 4*z[0]*z[0]*z[0]*z[1] - 4*z[0]*z[1]*z[1]*z[1] + c[1];
+    return [real, imag];
+}
+
+function in_mandelbrot_set(c, maxIter, mandelbrot_function) {
+    var x = 0;
+    var res = c
+    while (x < maxIter) {
+        switch (mandelbrot_function) {
+            case "4":
+                res = mandelbrot4(res, c);
+                break;            
+            case "3":
+                res = mandelbrot3(res, c);
+                break;
+            case "2":
+                res = mandelbrot2(res, c);
+                break;
+            default:
+                res = mandelbrot1(res, c);
+        }
+        if ((res[0]*res[0] + res[1]*res[1]) > mandelbrot_max_module) {
+            return {'status': false, 'nIter': x}; // No está en el conjunto, hemos tardado x interaciones en saberlo
+        }
+        x++;
+    }
+    return {'status': true, 'nIter': x};
+}
+
+function run() {
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillRect(0, 1, width, width);
+
+    var mandelbrot_inc = parseFloat(document.forms[0].elements.increment.value);
+    var mandelbrot_test_iterations = parseInt(document.forms[0].elements.iterations.value);
+    var mandelbrot_function = document.forms[0].elements.function.value;
+    var point_width = 1;
+    if (mandelbrot_inc >= 0.0009) point_width = 2;
+    if (mandelbrot_inc >= 0.009) point_width = 8;       
+    if (mandelbrot_inc >= 0.09) point_width = 16;       
+
+    document.getElementById("message").innerHTML = "Increment: "+mandelbrot_inc+", Iterations: "+mandelbrot_test_iterations;
+    for(var i=-mandelbrot_limit; i<=mandelbrot_limit; i += mandelbrot_inc) {
+        for (var j=-mandelbrot_limit; j<=mandelbrot_limit; j += mandelbrot_inc) {
+            check = in_mandelbrot_set([i, j], mandelbrot_test_iterations, mandelbrot_function);
+            if (check.status) {
+                ctx.fillStyle = "#000000";
+            } else {
+                ctx.fillStyle = get_color(check.nIter);
+            }
+            var point = adjust_scale(i, j);
+            ctx.fillRect(point[0], point[1], point_width, point_width);
+        }
+    }
+}
+
+document.getElementById("run").addEventListener('click', run);
+
+</script>
+
