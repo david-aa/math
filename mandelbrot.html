@@ -40,7 +40,7 @@ c.setAttribute('width', width);
 c.setAttribute('height', height);
 var ctx = c.getContext("2d");
 
-var mandelbrot_limit = 2.0;
+var mandelbrot_limit = 2;
 var mandelbrot_max_module = 4;
 
 
@@ -53,7 +53,7 @@ function get_color(nIter) {
     var factor = 50 + nIter;
     factor = parseInt(factor);
     if (factor > 255) factor = 255;
-    return "rgb("+factor+",0,0)";
+    return "rgb("+factor+",50,50)";
 }
 
 function mandelbrot1(z, c) {
